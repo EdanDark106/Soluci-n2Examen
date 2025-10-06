@@ -4,69 +4,59 @@ import java.util.Map;
 class Parqueo {
     private int nv; // Número de vehículos
     private double tarifaHora; // Tarifa por hora
-    private Map<String, Double> vehiculo; // Mapa para almacenar placa y tiempo (en horas)
+    private Map<String, String> vehiculoConductor; // Mapa para placa y conductor
+    private Map<String, Double> vehiculoTiempo; // Mapa para placa y tiempo (en horas)
 
     public Parqueo(int nv, double tarifaHora) {
         this.nv = nv;
         this.tarifaHora = tarifaHora;
-        this.vehiculo = new HashMap<>();
+        this.vehiculoConductor = new HashMap<>();
+        this.vehiculoTiempo = new HashMap<>();
     }
 
-    // Método para registrar la salida de un vehículo por placa
-    public double salida(String placa) {
-        if (vehiculo.containsKey(placa)) {
-            double tiempo = vehiculo.get(placa); // Tiempo en horas
-            double costo = tiempo * tarifaHora;
-            vehiculo.remove(placa); // Elimina el vehículo al salir
-            nv--; // Reduce el número de vehículos
-            return costo;
-        }
-        return 0.0; // Si no existe la placa
-    }
-
-    // Método sobrecargado para registrar salida y cancelar (simulado)
-    public boolean salida(String placa, boolean cancelar) {
-        if (cancelar && vehiculo.containsKey(placa)) {
-            vehiculo.remove(placa); // Cancela el registro
-            nv--; // Reduce el número de vehículos
+    // c) Método para registrar el ingreso de un vehículo con placa P y conductor
+    public boolean ingreso(String placa, String conductor) {
+        if (nv < 5 && !vehiculoConductor.containsKey(placa)) { // Límite de 5 vehículos
+            vehiculoConductor.put(placa, conductor);
+            vehiculoTiempo.put(placa, 0.0); // Tiempo inicial
+            nv++;
             return true;
         }
-        return false; // Si no se puede cancelar
+        return false;
     }
 
-    // Método para agregar un vehículo con su tiempo
-    public void agregarVehiculo(String placa, double tiempo) {
-        if (tiempo >= 0 && nv < 5) { // Límite de 5 vehículos como ejemplo
-            vehiculo.put(placa, tiempo);
+    // d) Método sobrecargado para registrar ingreso especificando las horas
+    public boolean ingreso(String placa, String conductor, double horas) {
+        if (nv < 5 && !vehiculoConductor.containsKey(placa) && horas >= 0) {
+            vehiculoConductor.put(placa, conductor);
+            vehiculoTiempo.put(placa, horas);
             nv++;
+            return true;
         }
+        return false;
     }
 
-    // Calcular ingreso total de todos los vehículos
-    public double calcularIngresoTotal() {
-        double total = 0.0;
-        for (double tiempo : vehiculo.values()) {
-            total += tiempo * tarifaHora;
-        }
-        return total;
+    // d) Hallar al conductor del vehículo de placa Z
+    public String hallarConductor(String placa) {
+        return vehiculoConductor.getOrDefault(placa, "No encontrado");
     }
 
-    // Calcular ingreso total para vehículos que estuvieron k horas
-    public double calcularIngresoPorHoras(double k) {
-        double total = 0.0;
-        for (Map.Entry<String, Double> entry : vehiculo.entrySet()) {
-            if (entry.getValue() == k) {
-                total += k * tarifaHora;
-            }
+    // d) Hallar cuántos vehículos permanecieron M horas en el parqueo
+    public int contarVehiculosPorHoras(double m) {
+        int count = 0;
+        for (double tiempo : vehiculoTiempo.values()) {
+            if (tiempo == m) count++;
         }
-        return total;
+        return count;
     }
 
     // Mostrar estado del parqueo
     public void mostrarEstado() {
         System.out.println("Vehículos en parqueo: " + nv);
-        for (Map.Entry<String, Double> entry : vehiculo.entrySet()) {
-            System.out.println("Placa: " + entry.getKey() + ", Tiempo: " + entry.getValue() + " horas");
+        for (Map.Entry<String, String> entry : vehiculoConductor.entrySet()) {
+            String placa = entry.getKey();
+            System.out.println("Placa: " + placa + ", Conductor: " + entry.getValue() +
+                             ", Tiempo: " + vehiculoTiempo.get(placa) + " horas");
         }
     }
 }
@@ -77,27 +67,27 @@ public class Main {
         Parqueo parqueo = new Parqueo(5, 12.5);
 
         // Agregar vehículos del ejemplo
-        parqueo.agregarVehiculo("1245AXC", 2.0);
-        parqueo.agregarVehiculo("3456BVC", 9.0);
-        parqueo.agregarVehiculo("257eJUX", 10.0);
-        parqueo.agregarVehiculo("322fHIP", 10.0);
-        parqueo.agregarVehiculo("3465KIX", 10.0);
+        parqueo.ingreso("1245AXC", "Luis Jairo", 2.0);
+        parqueo.ingreso("3456BVC", "Marcia Lira", 9.0);
+        parqueo.ingreso("257eJUX", "Pablo Rubio", 10.0);
+        parqueo.ingreso("322fHIP", "Rosa Jux", 10.0);
+        parqueo.ingreso("3465KIX", "Saul Lopez", 11.0);
 
         // Mostrar estado inicial
         System.out.println("Estado inicial del parqueo:");
         parqueo.mostrarEstado();
 
-        // a) Sobrecargar un operador para implementar la salida de un vehículo con placa "1245AXC"
-        double costoSalida = parqueo.salida("1245AXC");
-        System.out.println("\nCosto de salida del vehículo 1245AXC: " + costoSalida + " Bs");
+        // Prueba de hallar conductor
+        String conductor = parqueo.hallarConductor("1245AXC");
+        System.out.println("\nConductor de placa 1245AXC: " + conductor);
 
-        // b) Sobrecargar un método para cancelar la salida de un vehículo con placa "3456BVC"
-        boolean cancelado = parqueo.salida("3456BVC", true);
-        System.out.println("Cancelación de vehículo 3456BVC: " + (cancelado ? "Éxito" : "Fallo"));
+        // Prueba de contar vehículos que permanecieron 10 horas
+        int count10Horas = parqueo.contarVehiculosPorHoras(10.0);
+        System.out.println("Vehículos que permanecieron 10 horas: " + count10Horas);
 
-        // Calcular ingresos
-        System.out.println("\nIngreso total de todos los vehículos: " + parqueo.calcularIngresoTotal() + " Bs");
-        System.out.println("Ingreso total para vehículos que estuvieron 10 horas: " + parqueo.calcularIngresoPorHoras(10.0) + " Bs");
+        // Prueba de ingreso con nueva placa y conductor
+        boolean nuevoIngreso = parqueo.ingreso("789XYZ", "Nuevo Conductor", 5.0);
+        System.out.println("\nNuevo ingreso exitoso: " + nuevoIngreso);
 
         // Mostrar estado final
         System.out.println("\nEstado final del parqueo:");
